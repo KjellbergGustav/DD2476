@@ -1,0 +1,56 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug persistant (Launch) with Arguments Prompt",
+            "request": "launch",
+            "mainClass": "ir.Engine",
+            "args": ["-d", "./davisWiki", "-l", "ir20.png", "-p", "patterns.txt", "-ni"]
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch) with Arguments Prompt",
+            "request": "launch",
+            "mainClass": "ir.Engine",
+            "args": ["-d", "./davisWiki", "-l", "ir20.png", "-p", "patterns.txt"]
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-Engine<assignment1_f4f825fc>",
+            "request": "launch",
+            "mainClass": "ir.Engine",
+            "projectName": "assignment1_f4f825fc"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-HITSRanker<assignment1_f4f825fc>",
+            "request": "launch",
+            "mainClass": "ir.HITSRanker",
+            "projectName": "assignment1_f4f825fc"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-KGramIndex<assignment1_f4f825fc>",
+            "request": "launch",
+            "mainClass": "ir.KGramIndex",
+            "projectName": "assignment1_f4f825fc"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-TokenTest<assignment1_f4f825fc>",
+            "request": "launch",
+            "mainClass": "ir.TokenTest",
+            "projectName": "assignment1_f4f825fc"
+        }
+    ]
+}
