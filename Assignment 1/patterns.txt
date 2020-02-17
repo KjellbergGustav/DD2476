@@ -1,0 +1,58 @@
+//
+//  Information retrieval course
+//  First version: Johan Boye 2016
+//
+// In this file you can put your regular expressions
+// for matching non-standard words (like mail addresses).
+//
+// As you have probably already understood, lines beginning
+// with "//" are comments.
+
+// ADD YOUR PATTERNS HERE
+// Email addresses
+//This isn't fucking working, the shell script can't run,. why??
+
+^(\w+|\.?)*{1,64}@(\w+\.?){1,255}
+
+
+
+// Crazy for https's
+
+(https*:\/\/)(\w*((\.|:|\?|#|\/|\+|\=|\&|\-|\,|%|\@|\!)?(\w+|\d+)*))*
+
+// words seperated by _
+(\w+_\w+)(_\w+)*(\.\w+)
+
+
+//Words with dash or phone numbers
+(\w+|\d+)(\-(\w+|\d+))+
+
+
+// Twenty-four seven
+\d+/\d+
+
+
+
+// punktiation seperated numbers i.e. IPs and other like chapters (2.4.1) or comma, or semi colon
+((\d+|\w+)+((\:|\.|,)(\d+|\w+(\:|\.|,))+)+)
+
+// numbers with + or minus
+
+\+\d+
+
+
+// Dollares
+
+\$\d+
+(\w+_\w+)(_\w+)*(\.\w+)
+
+//(\w+)*(\'|\.)\w+
+
+// Positive look behind and look forward to see if word is in quote
+(?<=')\w*?(?=')
+
+//word's
+(\w+)*(\'|\.)*\w+
+
+
+// end
