@@ -59,7 +59,9 @@ public class HashedIndex implements Index {
         return this.index.get(token);
     }
 
-
+    public void computeScores(int n) {
+        
+    }
     /**
      *  No need for cleanup in a HashedIndex.
      */

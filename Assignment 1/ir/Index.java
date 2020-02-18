@@ -28,6 +28,9 @@ public interface Index {
     /** Returns the postings for a given term. */
     public PostingsList getPostings( String token );
 
+    /**Computes and adds the score to an entry */
+    public void computeScores(int n);
+
     /** This method is called on exit. */
     public void cleanup();
 

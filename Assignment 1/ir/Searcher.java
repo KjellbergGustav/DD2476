@@ -55,6 +55,10 @@ public class Searcher {
 
         if (query.queryterm.size() == 1){
             result = this.index.getPostings(query.queryterm.get(0).term);
+            switch(queryType){
+                case RANKED_QUERY:
+                    result = rankedSearch(result);
+            }
         }else{
             for (int queryTermIndex = 0; queryTermIndex < query.queryterm.size()-1; queryTermIndex++){
                 // Ground case when we compare with non-result list
@@ -80,6 +84,9 @@ public class Searcher {
         return result;
     }
 
+    private PostingsList rankedSearch(PostingsList postingsList){
+        return postingsList;
+    }
     private PostingsList PhraseSearch(PostingsList p1, PostingsList p2, int distance){
         PostingsList phrasePostingsList = new PostingsList();
         //TOD: You need to sort the  lists

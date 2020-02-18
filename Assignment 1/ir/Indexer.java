@@ -87,7 +87,9 @@ public class Indexer {
         }
     }
 
-
+    public void computeScores(){
+        index.computeScores(lastDocID);
+    }
     /* ----------------------------------------------- */
 
 

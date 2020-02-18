@@ -418,6 +418,22 @@ public class PersistentHashedIndex implements Index {
             //
     }
 
+    public void computeScores(int n){
+        // For token in this.index.keys()
+        // documentFrequency = (this.index(token).size)
+        // inverted Df = n/documentFrequency
+        // postingsLists = this.index(token)
+        // for docId in postingsLists.keys():
+        for (String token: this.index.keySet()){
+            int df = this.index.get(token).size();
+            double idf = Math.log(n/df);
+            for (PostingsEntry entry: this.index.get(token).getList()){
+                int tf = entry.offset.size();
+                double tf_idf = (tf*idf)/docLengths.get(entry.docID);
+                entry.score = tf_idf;
+            }
+        }
+    }
 
     /**
      *  Write index to file after indexing is done.
