@@ -11,6 +11,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.math.*;
 
 import ir.Query.QueryTerm;
@@ -57,9 +58,13 @@ public class Searcher {
             result = this.index.getPostings(query.queryterm.get(0).term);
             switch(queryType){
                 case RANKED_QUERY:
-                    result = rankedSearch(result);
+                    result = rankedSearch(query,result);
             }
         }else{
+            if (queryType == QueryType.RANKED_QUERY){
+                result = rankedSearch(query,null);
+                return result;
+            }
             for (int queryTermIndex = 0; queryTermIndex < query.queryterm.size()-1; queryTermIndex++){
                 // Ground case when we compare with non-result list
                 PostingsList p2 = this.index.getPostings(query.queryterm.get(queryTermIndex+1).term);
@@ -84,8 +89,36 @@ public class Searcher {
         return result;
     }
 
-    private PostingsList rankedSearch(PostingsList postingsList){
-        return postingsList;
+    private PostingsList rankedSearch(Query query, PostingsList p1){
+        if (p1 != null){
+            Collections.sort(p1.getList());
+            return p1;
+        }
+        else{
+            PostingsList result = new PostingsList();
+            for (int queryTermIndex = 0; queryTermIndex <= query.queryterm.size()-1; queryTermIndex++){
+                PostingsList pl = this.index.getPostings(query.queryterm.get(queryTermIndex).term);
+                for (PostingsEntry pe: pl.getList()){
+                    if (result.entryExist(pe.docID) == null){
+                        PostingsEntry peRes = new PostingsEntry(pe.docID);
+                        peRes.score = pe.score*query.queryterm.get(queryTermIndex).weight;
+                        result.addNewEntry(peRes);
+                    }
+                    else{
+                        result.getEntryByDocId(pe.docID).score += pe.score*query.queryterm.get(queryTermIndex).weight;
+                    }
+                }
+            }
+            for (int idx = 0; idx<result.getList().size()-1; idx++){
+
+                int len = this.index.docLengths.get(result.get(idx).docID);
+                double score = result.get(idx).score;
+                
+                Collections.sort(result.getList());
+            }
+            return result;
+        }
+
     }
     private PostingsList PhraseSearch(PostingsList p1, PostingsList p2, int distance){
         PostingsList phrasePostingsList = new PostingsList();

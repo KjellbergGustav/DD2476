@@ -383,12 +383,14 @@ public class PersistentHashedIndex implements Index {
             // TODO: There are multiple offsets, you'll need to iterate over them and add, though doesn't feel efficient...
             String[] splittedPostings = dataSplit[i].split(";");
             String docId = splittedPostings[0];
+            Double score = Double.parseDouble(splittedPostings[splittedPostings.length-1]);
             //docId = docId.replace("[", "");
             PostingsEntry postingsEntry = new PostingsEntry(Integer.parseInt(docId));
+            postingsEntry.score = score;
             //String[] offsetSplit = offsetString.split(";");
             //offsetString = offsetString.replace("[", "");
             //offsetString = offsetString.replace("]", "");
-            for (int l = 1; l<=splittedPostings.length-1; l++){
+            for (int l = 1; l<=splittedPostings.length-2; l++){
                 String offsetVal = splittedPostings[l];
                 offsetVal = offsetVal.replace(" ", "");
                 postingsList.addNewEntry(postingsEntry, Integer.parseInt(offsetVal));

@@ -28,6 +28,10 @@ public class PostingsList{
     return list.get( i );
     }
 
+    public PostingsEntry getEntryByDocId(int docId){
+        return this.checkList.get(docId);
+    }
+
     public ArrayList<PostingsEntry> getList(){
         return this.list;
 
@@ -79,6 +83,7 @@ public class PostingsList{
                 test.append(";");
                 test.append(os);
             }
+            test.append(";" + pe.score);
             test.append(":");
         }
         returnString += "]";
@@ -89,7 +94,7 @@ public class PostingsList{
         return testString;
     }
 
-    private PostingsEntry entryExist(int docId){
+    public PostingsEntry entryExist(int docId){
 
         // eventually this will be sorted and then we can use a real search algo like bin search...
         
