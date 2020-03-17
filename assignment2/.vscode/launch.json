@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-PageRank<assignment2_e00b40b3>",
+            "request": "launch",
+            "mainClass": "PageRank",
+            "projectName": "assignment2_e00b40b3",
+            "args": ["pagerank/linksDavis.txt", "pagerank/davisTitles.txt"],
+        }
+    ]
+}

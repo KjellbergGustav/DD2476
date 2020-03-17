@@ -19,6 +19,8 @@ public class PageRank {
      */
     HashMap<String,Integer> docNumber = new HashMap<String,Integer>();
 
+
+	HashMap<Integer, String> toRealDocName = new HashMap<Integer, String>();
     /**
      *   Mapping from document numbers to document names
      */
@@ -59,14 +61,35 @@ public class PageRank {
     /* --------------------------------------------- */
 
 
-    public PageRank( String filename ) {
+    public PageRank( String filename, String davisNameFile ) {
 	int noOfDocs = readDocs( filename );
+	readNameFile(davisNameFile);
 	iterate( noOfDocs, 6);
     }
 
 
     /* --------------------------------------------- */
 
+	private void readNameFile(String nameFile){
+		int fileIndex = 0;
+		try {
+			System.err.print( "Reading names... " );
+			BufferedReader in = new BufferedReader( new FileReader( nameFile ));
+			String line;
+			while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS ) {
+			String[] splittedInput = line.split( ";" );
+			String title = splittedInput[1];
+			Integer titleId = Integer.parseInt(splittedInput[0]);
+			toRealDocName.put(titleId, title);
+			fileIndex++;
+			}
+		}catch ( FileNotFoundException e ) {
+			System.err.println( "File " + nameFile + " not found!" );
+		}
+		catch ( IOException e ) {
+			System.err.println( "Error reading file " + nameFile );
+		}
+	}
 
     /**
      *   Reads the documents and fills the data structures. 
@@ -204,7 +227,9 @@ public class PageRank {
 			DocumentRank docRank = new DocumentRank();
 			docRank.setDocId(docId);
 			docRank.setRank(result[docId]);
-			docRank.setName(docName[docId]);
+			String name = docName[docId];
+			Integer nameAsInt = Integer.parseInt(name);
+			docRank.setName( toRealDocName.get(nameAsInt));
 			//System.out.println(docName[docId]);
 			docRanks.add(docRank);
 		}
@@ -255,11 +280,11 @@ public class PageRank {
 		return res;
 	}
     public static void main( String[] args ) {
-	if ( args.length != 1 ) {
+	if ( args.length != 2 ) {
 	    System.err.println( "Please give the name of the link file" );
 	}
 	else {
-	    new PageRank( args[0] );
+	    new PageRank( args[0], args[1] );
 	}
     }
 }
