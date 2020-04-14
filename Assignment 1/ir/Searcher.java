@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.math.*;
 
 import ir.Query.QueryTerm;
@@ -27,6 +30,10 @@ public class Searcher {
     /** The k-gram index to be searched by this Searcher */
     KGramIndex kgIndex;
     
+    HashMap<String,Double> pageRankScore = new HashMap<String, Double>();
+
+    Double pageRankWeight = 1.0;
+
     /** Constructor */
     public Searcher( Index index, KGramIndex kgIndex ) {
         this.index = index;
@@ -37,12 +44,12 @@ public class Searcher {
      *  Searches the index for postings matching the query.
      *  @return A postings list representing the result of the query.
      */
-    public PostingsList search( Query query, QueryType queryType, RankingType rankingType ) { 
+    public PostingsList search( Query query, QueryType queryType, RankingType rankingType, NormalizationType normalizationType ) { 
         //
         //  REPLACE THE STATEMENT BELOW WITH YOUR CODE
         //
         PostingsList result = new PostingsList();
-
+        
         /*switch(queryType){
             case INTERSECTION_QUERY:
                 result = Search_insterseaction(query);
@@ -55,21 +62,23 @@ public class Searcher {
         }*/
 
         if (query.queryterm.size() == 1){
-            result = this.index.getPostings(query.queryterm.get(0).term);
+            result = this.index.getPostings(query.queryterm.get(0).term, kgIndex);
             switch(queryType){
                 case RANKED_QUERY:
-                    result = rankedSearch(query,result);
+                    readPageRankFile("ranks.txt");
+                    result = rankedSearch(query,result, rankingType, normalizationType);
             }
         }else{
             if (queryType == QueryType.RANKED_QUERY){
-                result = rankedSearch(query,null);
+                readPageRankFile("ranks.txt");
+                result = rankedSearch(query,null, rankingType, normalizationType);
                 return result;
             }
             for (int queryTermIndex = 0; queryTermIndex < query.queryterm.size()-1; queryTermIndex++){
                 // Ground case when we compare with non-result list
-                PostingsList p2 = this.index.getPostings(query.queryterm.get(queryTermIndex+1).term);
+                PostingsList p2 = this.index.getPostings(query.queryterm.get(queryTermIndex+1).term, kgIndex);
                 if (queryTermIndex == 0){
-                    result = this.index.getPostings(query.queryterm.get(queryTermIndex).term);
+                    result = this.index.getPostings(query.queryterm.get(queryTermIndex).term, kgIndex);
                 }
                 p2.getList().sort(Comparator.comparing(PostingsEntry::getDocId));
                 //p2.getList().sort((pe1, pe2) -> pe1.getDocId().compareTo(pe2.getDocId()));
@@ -89,23 +98,91 @@ public class Searcher {
         return result;
     }
 
-    private PostingsList rankedSearch(Query query, PostingsList p1){
+    private void readPageRankFile(String filename){
+        // Code from skeleton in persistentHashedIndex
+        try{
+            FileReader freader = new FileReader(filename);
+            BufferedReader br = new BufferedReader(freader);
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(" ");
+                String fileName = data[0];
+                Double score = Double.parseDouble(data[1]);
+                pageRankScore.put(fileName, score);
+            }
+        freader.close();
+        }catch (Exception e){
+            System.err.println(e.getMessage());
+        }
+
+    }
+
+    private double calcCombinedScore(PostingsEntry pe, double score, RankingType rankingType){
+        // Gets the docName that we'll remove the path from and the use as key for our own hashMap
+        // TF_IDF, PAGERANK, COMBINATION
+        if (rankingType == RankingType.TF_IDF){return score;}
+        else if (rankingType == RankingType.COMBINATION || rankingType == RankingType.PAGERANK){
+            String docNameUnstripped = this.index.docNames.get(pe.docID);
+            int stripIndex = docNameUnstripped.lastIndexOf("/") + 1;
+            String docNameStripped = docNameUnstripped.substring(stripIndex, docNameUnstripped.length());
+            double prScore = pageRankScore.get(docNameStripped);
+            if (rankingType == RankingType.PAGERANK){return prScore;}
+            return combinationScoreFunction(prScore, score, pe);
+        }
+        return score;
+    }
+
+    private double combinationScoreFunction(double prScore, double tfidfScore, PostingsEntry pe){
+        return prScore*pageRankWeight+tfidfScore/this.index.docLengths.get(pe.docID);
+    }
+    private double normalizeScore(PostingsEntry pe, NormalizationType normalizationType){
+        if (normalizationType == NormalizationType.EUCLIDEAN){
+            double s = pe.score/this.index.docLengthsEuc.get(pe.docID);
+            return s;
+        }else{
+            double s = pe.score/this.index.docLengths.get(pe.docID);
+            return s;
+        }
+    }
+
+    private PostingsList rankedSearch(Query query, PostingsList p1, RankingType rankingType, NormalizationType normalizationType){
         if (p1 != null){
+            PostingsList res = new PostingsList();
+            for (PostingsEntry pe: p1.getList()){
+                //TODO: pe.score = query.queryterm.get(0).weight*normalizeScore(pe, normalizationType);
+                pe.score = query.queryterm.get(0).weight*pe.score;
+            }
             Collections.sort(p1.getList());
             return p1;
         }
         else{
             PostingsList result = new PostingsList();
             for (int queryTermIndex = 0; queryTermIndex <= query.queryterm.size()-1; queryTermIndex++){
-                PostingsList pl = this.index.getPostings(query.queryterm.get(queryTermIndex).term);
+                PostingsList pl = this.index.getPostings(query.queryterm.get(queryTermIndex).term, kgIndex);
                 for (PostingsEntry pe: pl.getList()){
                     if (result.entryExist(pe.docID) == null){
+                        if (pe.docID == 9820){
+                            int holds = 1;
+                        }
                         PostingsEntry peRes = new PostingsEntry(pe.docID);
-                        peRes.score = pe.score*query.queryterm.get(queryTermIndex).weight;
+                        //TODO: Double normalizedScore = normalizeScore(pe, normalizationType);
+                        Double normalizedScore = pe.score;
+                        peRes.score = normalizedScore*query.queryterm.get(queryTermIndex).weight;
+                        peRes.score = calcCombinedScore(peRes, peRes.score, rankingType);
                         result.addNewEntry(peRes);
                     }
                     else{
-                        result.getEntryByDocId(pe.docID).score += pe.score*query.queryterm.get(queryTermIndex).weight;
+                        if (pe.docID == 9820){
+                            int holds = 1;
+                        }
+                        // TODO: Double normalizedScore = normalizeScore(pe, normalizationType);
+                        Double normalizedScore = pe.score;
+
+                        double score = normalizedScore*query.queryterm.get(queryTermIndex).weight;
+                        pe = result.getEntryByDocId(pe.docID);
+                        //result.getEntryByDocId(pe.docID).score += pe.score*query.queryterm.get(queryTermIndex).weight;
+                        result.getEntryByDocId(pe.docID).score +=calcCombinedScore(pe, score, rankingType);
+
                     }
                 }
             }
@@ -120,6 +197,7 @@ public class Searcher {
         }
 
     }
+    
     private PostingsList PhraseSearch(PostingsList p1, PostingsList p2, int distance){
         PostingsList phrasePostingsList = new PostingsList();
         //TOD: You need to sort the  lists

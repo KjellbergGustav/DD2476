@@ -30,6 +30,7 @@ public class Indexer {
     String patterns_file;
 
 
+
     /* ----------------------------------------------- */
 
 
@@ -71,13 +72,19 @@ public class Indexer {
                     try {
                         Reader reader = new InputStreamReader( new FileInputStream(f), StandardCharsets.UTF_8 );
                         Tokenizer tok = new Tokenizer( reader, true, false, true, patterns_file );
+                        ArrayList<String> tokensInDoc = new ArrayList<String>();
+
                         int offset = 0;
                         while ( tok.hasMoreTokens() ) {
                             String token = tok.nextToken();
                             insertIntoIndex( docID, token, offset++ );
+                            tokensInDoc.add(token);
                         }
+                        this.index.documentTerms.put(docID, tokensInDoc);
                         index.docNames.put( docID, f.getPath() );
+                        // This will give us all document terms for a document to calc euc lengths with....
                         index.docLengths.put( docID, offset );
+
                         reader.close();
                     } catch ( IOException e ) {
                         System.err.println( "Warning: IOException during indexing." );
@@ -89,6 +96,7 @@ public class Indexer {
 
     public void computeScores(){
         index.computeScores(lastDocID);
+        index.computeEucDocLen();
     }
     /* ----------------------------------------------- */
 

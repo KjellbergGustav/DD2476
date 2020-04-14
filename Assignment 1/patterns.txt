@@ -9,18 +9,20 @@
 // with "//" are comments.
 
 // ADD YOUR PATTERNS HERE
+
+// Crazy for https's
+
+(https*:\/\/)(\w*((\.|:|\?|#|\/|\+|\=|\&|\-|\,|%|\@|\!|')?(\w+|\d+)*))*
+
 // Email addresses
-//This isn't fucking working, the shell script can't run,. why??
 
 ^(\w+|\.?)*{1,64}@(\w+\.?){1,255}
 
 
 
-// Crazy for https's
 
-(https*:\/\/)(\w*((\.|:|\?|#|\/|\+|\=|\&|\-|\,|%|\@|\!)?(\w+|\d+)*))*
 
-// words seperated by _
+// words seperated by _ 
 (\w+_\w+)(_\w+)*(\.\w+)
 
 

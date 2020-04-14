@@ -236,7 +236,11 @@ public class PersistentHashedIndex implements Index {
         FileOutputStream fout = new FileOutputStream( INDEXDIR + "/docInfo" );
         for (Map.Entry<Integer,String> entry : docNames.entrySet()) {
             Integer key = entry.getKey();
-            String docInfoEntry = key + ";" + entry.getValue() + ";" + docLengths.get(key) + "\n";
+            if (docLengthsEuc.get(key) == null){
+                docLengthsEuc.put(key, 0.0);
+            }
+            String docInfoEntry = key + ";" + entry.getValue() + ";" + docLengths.get(key) + ";" + docLengthsEuc.get(key) +"\n";
+            
             fout.write(docInfoEntry.getBytes());
         }
         fout.close();
@@ -258,6 +262,7 @@ public class PersistentHashedIndex implements Index {
                 String[] data = line.split(";");
                 docNames.put(new Integer(data[0]), data[1]);
                 docLengths.put(new Integer(data[0]), new Integer(data[2]));
+                docLengthsEuc.put(Integer.parseInt(data[0]), Double.parseDouble(data[3]));
             }
         }
         freader.close();
@@ -275,14 +280,14 @@ public class PersistentHashedIndex implements Index {
 
         // As words can have the same code, we reverse to get more uniqueness
         // trying to obatin a so called Avalanche effect.
-        if (!recusion){
+        /*if (!recusion){
             String reversedString = new StringBuilder(key).reverse().toString(); // this should yield another hash val. (flipping bits)
             long reversedHash = hashFunc(reversedString, true); // The hash val for flipped bits
             hashValue *= 100; // make the last bits 0, this basically increase our avalanche effect...
             reversedHash = (reversedHash%70); // we only care about a couple of digits now to make it unique and we get another 
             // type of combination compared to % TABLESIZE
             hashValue += reversedHash;
-        }
+        }*/
         return hashValue%TABLESIZE;
         
         // This was obiously shit.
@@ -315,15 +320,15 @@ public class PersistentHashedIndex implements Index {
             for (String key: keys){
                 PostingsList postingsList = this.index.get(key);
                 stringRepOfClass = postingsList.toString();
-                stringRepOfClass = key + ":" + stringRepOfClass; // prepend the word
+                stringRepOfClass = key + " :: " + stringRepOfClass; // prepend the word
 
                 hashValue = hashFunc(key); // Returns the hashvalue (pntr in dictFile)
 
                 // This will double the hashValue if there's a collision
                 // char = 2, int = 4, long = 8
                 int sizeOfEntry = 14;
-                //while ((!(tempHashMap.putIfAbsent(hashValue, 1) == null))){
-                while ((!(tempHashMap.putIfAbsent(hashValue, 1) == null) &&!(tempHashMap.putIfAbsent(hashValue+sizeOfEntry, 1) == null) )){
+                while ((!(tempHashMap.putIfAbsent(hashValue, 1) == null))){
+                //while ((!(tempHashMap.putIfAbsent(hashValue, 1) == null) &&!(tempHashMap.putIfAbsent(hashValue+sizeOfEntry, 1) == null) )){
                     hashValue = Math.abs(hashValue+1) % TABLESIZE;
                     //System.err.println("hashValue:" + hashValue);
                     collisions++;
@@ -348,7 +353,6 @@ public class PersistentHashedIndex implements Index {
 
     // ==================================================================
 
-
     /**
      *  Returns the postings for a specific term, or null
      *  if the term is not in the index.
@@ -366,11 +370,11 @@ public class PersistentHashedIndex implements Index {
 
         String data = readData(entry.getPointer(), entry.getSizeOfPL());
         PostingsList postingsList = new PostingsList();
-        String[] dataSplit = data.split(":"); // this will contain a postingListObj
+        String[] dataSplit = data.split(" :: "); // this will contain a postingListObj
         boolean notMatch = true;
         //while (notMatch){
         for (int c = 0; c <=token.length()-1; c++){
-            if (token.charAt(c) == dataSplit[0].charAt(c)){notMatch = false;}
+            if (c < dataSplit[0].length() && token.charAt(c) == dataSplit[0].charAt(c)){notMatch = false;}
             else{notMatch = true;}
             }/*
             tokenHash = (Math.abs(tokenHash+1) % TABLESIZE);
@@ -379,8 +383,8 @@ public class PersistentHashedIndex implements Index {
             postingsList = new PostingsList();
             dataSplit = data.split(":"); // this will contain a postingListObj
         }*/
-        for (int i = 1; i<=dataSplit.length-1; i++){
-            // TODO: There are multiple offsets, you'll need to iterate over them and add, though doesn't feel efficient...
+        dataSplit = dataSplit[1].split(":");
+        for (int i = 0; i<=dataSplit.length-1; i++){
             String[] splittedPostings = dataSplit[i].split(";");
             String docId = splittedPostings[0];
             Double score = Double.parseDouble(splittedPostings[splittedPostings.length-1]);
@@ -428,15 +432,53 @@ public class PersistentHashedIndex implements Index {
         // for docId in postingsLists.keys():
         for (String token: this.index.keySet()){
             int df = this.index.get(token).size();
-            double idf = Math.log(n/df);
+            
+            double idf = Math.log((double)n/(double)df);
+            if (token.equals("frowning")){
+                System.err.println(token+" "+ idf);
+            }
+            if (token.equals("food")|| token.equals("residence") || token.equals("#redirect") || token.equals("redirect") || token.equals("davis") || token.equals("coop") || token.equals("resident") || token.equals("movein") || token.equals("hall") || token.equals("recycling") || token.equals("drive")){
+                System.err.println(token + " " + idf);
+            }
             for (PostingsEntry entry: this.index.get(token).getList()){
                 int tf = entry.offset.size();
-                double tf_idf = (tf*idf)/docLengths.get(entry.docID);
+                // Remove this line for now and let us do our normaliziation later on....
+                //double tf_idf = (tf*idf)/docLengths.get(entry.docID);
+                
+                // Instead we'll use this line without normalization
+                double tf_idf = (tf*idf);
                 entry.score = tf_idf;
             }
         }
     }
-
+    public void computeEucDocLen(){
+        Set<Integer> docIds = documentTerms.keySet();
+        // IterateOverAllTerms
+        /*for (Integer key: docIds){
+            double docLenEuc = 0.0;
+            ArrayList<String> terms = documentTerms.get(key);
+            for (String term: terms){
+                docLenEuc += Math.pow(getPostings(term).get(key).score,2);
+            }
+            docLengthsEuc.put(key, Math.sqrt(docLenEuc));        
+        }*/
+        Set<String> terms = this.index.keySet();
+        for (String termKey: terms){
+            PostingsList pl = this.index.get(termKey);
+            for( PostingsEntry pe: pl.getList()){
+                if (docLengthsEuc.containsKey(pe.docID)){
+                    docLengthsEuc.put(pe.docID, docLengthsEuc.get(pe.docID)+ Math.pow(pe.score,2));
+                }
+                else{
+                    docLengthsEuc.put(pe.docID, Math.pow(pe.score,2));
+                }
+            }
+        }
+        Set<Integer> docLenKey = docLengthsEuc.keySet();
+        for (Integer key: docLenKey){
+            docLengthsEuc.put(key, Math.sqrt(docLengthsEuc.get(key)));
+        }
+    }
     /**
      *  Write index to file after indexing is done.
      */
@@ -445,5 +487,11 @@ public class PersistentHashedIndex implements Index {
         System.err.print( "Writing index to disk..." );
         writeIndex();
         System.err.println( "done!" );
+    }
+
+    @Override
+    public PostingsList getPostings(String token, KGramIndex kgIndex) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

@@ -8,6 +8,7 @@
 package ir;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.io.File;
 
 /**
@@ -16,8 +17,8 @@ import java.io.File;
 public class Engine {
 
     /** The inverted index. */
-    //Index index = new HashedIndex();
-    Index index = new PersistentHashedIndex();
+    Index index = new HashedIndex();
+    //Index index = new PersistentHashedIndex();
 
     /** The indexer creating the search index. */
     Indexer indexer;
@@ -48,7 +49,7 @@ public class Engine {
     String pic_file = "";
 
     /** The file containing the pageranks. */
-    String rank_file = "";
+    String rank_file = "/Users/gustavkjellberg/Documents/KTH/Search engines and information retrieval systems/Assignments/Assignment 1/ranks.txt";
 
     /** For persistent indexes, we might not need to do any indexing. */
     boolean is_indexing = true;
@@ -84,6 +85,14 @@ public class Engine {
                 indexer.computeScores();
                 long elapsedTime = System.currentTimeMillis() - startTime;
                 gui.displayInfoText( String.format( "Indexing done ain %.1f seconds.", elapsedTime/1000.0 ));
+                String[] StringkGramsOne = "ve".split(" ");
+                String[] kGramsTwo = "th he".split(" ");
+                ArrayList<String[]> kGrams = new ArrayList<String[]>();
+                kGrams.add(StringkGramsOne);
+                kGrams.add(kGramsTwo);
+                for (String[] kgramString: kGrams){
+                   indexer.kgIndex.runMain(kgramString);
+            }
                 index.cleanup();
             }
         } else {
@@ -123,7 +132,12 @@ public class Engine {
             } else if ( "-ni".equals( args[i] )) {
                 i++;
                 is_indexing = false;
-            } else {
+            }else if ( "-k".equals( args[i] )) {
+                i++;
+                if ( i < args.length ) {
+                    kgIndex = new KGramIndex(Integer.parseInt(args[i++]));
+                } 
+            }else {
                 System.err.println( "Unknown option: " + args[i] );
                 break;
             }

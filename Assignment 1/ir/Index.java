@@ -7,6 +7,7 @@
 
 package ir;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -22,6 +23,12 @@ public interface Index {
     /** Mapping from document identifier to document length. */
     public HashMap<Integer,Integer> docLengths = new HashMap<Integer,Integer>();
 
+    public HashMap<Integer,Double> docLengthsEuc = new HashMap<Integer,Double>();
+
+    HashMap<Integer, ArrayList<String>> documentTerms = new HashMap<Integer, ArrayList<String>>();
+
+    public PostingsList getPostings( final String token, KGramIndex kgIndex );
+
     /** Inserts a token into the index. */
     public void insert( String token, int docID, int offset );
 
@@ -30,6 +37,8 @@ public interface Index {
 
     /**Computes and adds the score to an entry */
     public void computeScores(int n);
+
+    public void computeEucDocLen();
 
     /** This method is called on exit. */
     public void cleanup();

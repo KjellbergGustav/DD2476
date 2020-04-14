@@ -6,17 +6,24 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Debug kGram",
+            "request": "launch",
+            "mainClass": "ir.KGramIndex",
+            "args": ["-f", "kgram_test.txt", "-p", "patterns.txt", "-k", "2", "-kg", "ve" ]
+        },
+        {
+            "type": "java",
             "name": "Debug persistant (Launch) with Arguments Prompt",
             "request": "launch",
             "mainClass": "ir.Engine",
-            "args": ["-d", "./davisWiki", "-l", "ir20.png", "-p", "patterns.txt", "-ni"]
+            "args": ["-d", "./davisWiki", "-l", "ir20.png", "-p", "patterns.txt", "-k", "2" ,"-ni"]
         },
         {
             "type": "java",
             "name": "Debug (Launch) with Arguments Prompt",
             "request": "launch",
             "mainClass": "ir.Engine",
-            "args": ["-d", "./davisWiki", "-l", "ir20.png", "-p", "patterns.txt"]
+            "args": ["-d", "./davisWiki", "-l", "ir20.png", "-p", "patterns.txt", "-k", "2"]
         },
         {
             "type": "java",
